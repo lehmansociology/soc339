@@ -1,0 +1,21 @@
+Package: soc339
+Type: Package
+Title: Supports students and faculty in Lehman College Soc 339
+Version: 0.1.0
+Author: person("Elin", "Waring", email="elin.waring@gmail.com", role = "aut", "cre"),
+        person("Eric", "Ketcham", email="eric.ketcham@gmail.com", role = "aut"),
+Maintainer: Elin Waring <elin.waring@gmail.com>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: TBD
+Encoding: UTF-8
+LazyData: true
+Imports:
+    dplyr,
+    knitr,
+    ggplot2,
+    HMDHFDplus (>= 1.1.8)
+Suggests:
+    pander
+Remotes:
+    timriffe/TR1/TR1/HMDHFDplus
