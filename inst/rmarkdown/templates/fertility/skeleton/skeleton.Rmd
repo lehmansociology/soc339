@@ -76,7 +76,7 @@ To start, we need to know the number of births to women of each particular age i
 
 ```{r}
 
-agespecificbirths <- readHFDweb(CNTRY = 'USA', item = 'birthsRR', username = 'YOUR USERNAME HERE', password = 'YOUR PASSWORD HERE')
+agespecificbirths <- readHFD('USAbirthsRR.txt', fixup=TRUE)
 
 ```
 
