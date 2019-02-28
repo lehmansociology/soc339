@@ -3,7 +3,7 @@ title: "Internal Migration Lab"
 output: html_document
 ---
 
-In this lab, we'll take a look at household movement within and into the five boroughs of New York City between 2014 and 2015.  As always, we'll start by loading our libraries.
+In this lab, we'll take a look at household movement within and into the five boroughs of New York City between 2016 and 2017.  As always, we'll start by loading our libraries.
  
 ```{r, echo=FALSE, message=FALSE}
 # Load your libraries here
@@ -14,9 +14,9 @@ library('printr')
 
 ```
 
-For this lab, we'll use American Community Survey data.  To help keep response rates for the Census near 100%, in the 1990's, the Census Bureau decided to make the Census shorter, and to get rid of the Long Form Census that was administered to a portion of the population.  They found that longer questionnaires yielded lower response rates.  So, the Census Bureau created a new survey called the American Community Survey.  The ACS is administered to 1% of the US population each year, and asks a much more detailed and lengthy series of questions than on the Census, allowing the Census Bureau to keep the Census itself very brief.  Here, we will look at the results of their questions asking about household movement within the 5 boroughs of New York City on the 2015 ACS.
+For this lab, we'll use American Community Survey data.  To help keep response rates for the Census near 100%, in the 1990's, the Census Bureau decided to make the Census shorter, and to get rid of the Long Form Census that was administered to a portion of the population.  They found that longer questionnaires yielded lower response rates.  So, the Census Bureau created a new survey called the American Community Survey.  The ACS is administered to 1% of the US population each year, and asks a much more detailed and lengthy series of questions than on the Census, allowing the Census Bureau to keep the Census itself very brief.  Here, we will look at the results of their questions asking about household movement within the 5 boroughs of New York City on the 2017 ACS.
 
-The code below creates geographies for our pull from the ACS, and then imports data from a specific table already created by the Census Bureau.  Enter in 2015 for the year to tell ACS which year's data we want.
+The code below creates geographies for our pull from the ACS, and then imports data from a specific table already created by the Census Bureau.  Enter in 2017 for the year to tell ACS which year's data we want.
 
 ````{r}
 
@@ -27,7 +27,7 @@ brooklyn <- geo.make(county = "Kings County", state = "NY")
 statenisland <- geo.make(county = "Richmond County", state = "NY")
 nyc_counties <- bronx + manhattan + queens + brooklyn + statenisland
 
-migration <- acs.fetch(geography = nyc_counties, table.number = "B07003", endyear = ENTER YEAR HERE, col.names = "pretty")
+migration <- acs.fetch(geography = nyc_counties, table.number = "B07003", endyear = ENTER YEAR HERE, span = 1, col.names = "pretty")
 
 ````
 
