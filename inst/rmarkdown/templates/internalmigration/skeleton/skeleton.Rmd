@@ -18,7 +18,7 @@ For this lab, we'll use American Community Survey data.  To help keep response r
 
 The code below creates geographies for our pull from the ACS, and then imports data from a specific table already created by the Census Bureau.  Enter in 2017 for the year to tell ACS which year's data we want.
 
-````{r}
+```{r}
 
 bronx <- geo.make(county = "Bronx County", state = "NY")
 manhattan <- geo.make(county = "New York County", state = "NY")
@@ -29,11 +29,11 @@ nyc_counties <- bronx + manhattan + queens + brooklyn + statenisland
 
 migration <- acs.fetch(geography = nyc_counties, table.number = "B07003", endyear = ENTER YEAR HERE, span = 1, col.names = "pretty")
 
-````
+```
 
 The names for the columns in the table are extremely long, so this code shortens the lines.  Then, we flip the row and columns of the table to make them easier to read.
 
-````{r}
+```{r}
 
 migration.names <- acs.colnames(migration)
 new.names <- stringr::str_sub(migration.names, start = 82)
@@ -45,21 +45,21 @@ estimatest <- t(estimates)
 
 estimatest
 
-````
+```
 
 Next, since we'll want to work with the data, we make some changes to how the names or each variable is formatted.
 
-````{r}
+```{r}
 
 new.names <- str_replace_all(str_trim(new.names), " ", ".")
 new.names <- str_replace_all(str_trim(new.names), ":", "")
 colnames(estimates) <- new.names
 
-````
+```
 
 The ACS provides us with counts, or the estimated number of people that fall within each category.  We want to take a look at percents so we can view the relative proportions within each category.  The code below will calculate the percentages within each category.
 
-````{r}
+```{r}
 
 # First we create a function to calculate total percent and male-female breakdown.
 
@@ -130,11 +130,11 @@ moved_from_abroad <- list("Total" =  estimates$Total,
 
 percent_moved_from_abroad <-  total_and_gender_percents(moved_from_abroad)
 
-````
+```
 
 Now, we want to create a separate table with just the percentages.  The code below separates out the variables with percentages from the original count variables.  After separating out the variables we want in our new table, we'll need to flip (or transpose) the rows and columns again using the t() command.  Go ahead an name the datasets.  You'll need one name for the dataset that selects just the variables in percent format, and you'll need a second dataset name for the transposed version.
 
-````{r}
+```{r}
 
 YOUR DATA SET NAME FOR PERCENTS TABLE <- cbind(gender_distribution, percent_same_house, 
                       percent_moved_same_county,
@@ -146,6 +146,6 @@ YOUR TRANSPOSED DATASET NAME <- t(YOUR DATA SET NAME FOR PERCENTS TABLE)
 
 YOUR TRANSPOSED DATASET NAME
 
-````
+```
 
 Go ahead and knit this template to PDF.  The main results you'll see are two tables, the first with counts, and the second with percentages.  We will interpret these tables in the lab in Blackboard.  Note that the document will not be wide enough to display the full table.  The submitted PDF will show me that you completed the template, however to view the full tables, you may need to knit to HTML or just view the tables in RStudio.
