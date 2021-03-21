@@ -1,7 +1,7 @@
 Package: soc339
 Type: Package
 Title: Supports Lehman College Soc 339
-Version: 0.1.1
+Version: 0.1.3
 Author: person("Elin", "Waring", email="elin.waring@gmail.com", role = "aut", "cre"),
         person("Eric", "Ketcham", email="eric.ketcham@gmail.com", role = "aut"),
 Maintainer: Elin Waring <elin.waring@gmail.com>
