@@ -16,7 +16,7 @@ library('ggplot2')
 
 ```
 
-To do this, first we'll tell R that we want to make a map of states.  In doing so, R creates a dataset with latitude and longitude data for the boundaries of each state.  Then, we'll get data from the ACS on mediage age at first marriage for males and females in each state.  This will be a separate dataset with the data for median age at first marriage.  Later in the lab, we'll combine these two datasets together.  For the data from the ACS, we want to make a map of the data from 2015.  Go ahead and fill in the year 2015 where promped in the code below.
+To do this, first we'll tell R that we want to make a map of states.  In doing so, R creates a dataset with latitude and longitude data for the boundaries of each state.  Then, we'll get data from the ACS on mediage age at first marriage for males and females in each state.  This will be a separate dataset with the data for median age at first marriage.  Later in the lab, we'll combine these two datasets together.  For the data from the ACS, we want to make a map of the data from 2017.  Go ahead and fill in the year 2015 where promped in the code below.
 
 ````{r}
 
@@ -62,7 +62,7 @@ ggplot() +
   theme_bw() + 
   coord_map() +
   labs(fill = "Median Age at First Marriage" , 
-       title = "Median Age at First Marriage, Males, 2015",
+       title = "Median Age at First Marriage, Males, 2017",
        x="", y="") + 
   scale_y_continuous(breaks=c()) + 
   scale_x_continuous(breaks=c()) + 
@@ -80,7 +80,7 @@ ggplot() +
   theme_bw() + 
   coord_map() +
   labs(fill = "Median Age at First Marriage" , 
-       title = "Median Age at First Marriage, Females, 2015", 
+       title = "Median Age at First Marriage, Females, 2017", 
        x="", y="") + 
   scale_y_continuous(breaks=c()) + 
   scale_x_continuous(breaks=c()) + 
