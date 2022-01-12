@@ -3,87 +3,311 @@ title: 'Marriage and Family Lab'
 output: pdf_document
 ---
 
-In this lab, we'll create two maps of median age at first marriage in the US - one map for males, and one for females.  As always, let's start by loading the libraries.
+In this lab, we'll explore the median age at first marriage in the United States, and see how much it has changed from 2005 to 2019. As always, let's start by loading the libraries. The "tidycensus" package allows us to pull data from the Census Bureau. The "tidyr" package allows us to manipulate the data. And the "ggplot2" package allows us to visualize the data. Since we are pulling data from the Census Bureau, you will need to enter your Census API key.
  
-```{r, echo=FALSE, message=FALSE}
-# Load your libraries here
+```{r}
 
+library('soc339')
 library('lehmansociology')
-library('maps')
-library('acs')
-library('printr')
+library('tidycensus')
+library('tidyr')
 library('ggplot2')
+
+census_api_key("YOUR CENSUS API KEY HERE")
 
 ```
 
-To do this, first we'll tell R that we want to make a map of states.  In doing so, R creates a dataset with latitude and longitude data for the boundaries of each state.  Then, we'll get data from the ACS on mediage age at first marriage for males and females in each state.  This will be a separate dataset with the data for median age at first marriage.  Later in the lab, we'll combine these two datasets together.  For the data from the ACS, we want to make a map of the data from 2017.  Go ahead and fill in the year 2015 where promped in the code below.
+For this lab, we will use data from the American Community Survey (ACS). The ACS is a survey sent to a sample of US households each year. The survey includes questions on a wide range of topics, and provides much more detail than is available from the decennial census. Data from the ACS are available back to 2005. The ACS is released in two forms - the 1-year data and the 5-year data. 5-year data combined results from 5 years, and is used to provide estimates for small areas or small populations. For larger geographies and larger samples, we can use 1-year ACS data. In the syntax below, we will use the "tidycensus" package to pull data on age at first marriage from the 1-year ACS from 2005 through 2019.
 
-````{r}
+In the "acs_get()" command, we need to specify the geography we are pulling data for, which is the United States, indicated by "us". We also need to specify the variables, which are "B12007_001E", the variable for median age at first marriage for males, and "B12007_002E", the variable for median age at first marriage for females. (Note that median age at first marriage here is for the population ages 15 to 54.) In addition, we need to specify the name of the survey we are pulling data from, which in this case is "acs1", which stands for the 1-year American Community Survey data. Finally, we need to specify the year the data correspond to. 
 
-allstates <- map_data("state")
+The first "get_acs()" command is completed for you, pulling data for 2019. Fill in the year and survey name for the following "get_acs()" commands, for 2018, 2017, etc., back to 2005. If you're not sure which year to enter each time, look at the names of the data sets we're creating, which is what is to the left of "<- get_acs()" each time.
 
-states<- geo.make(state="*")
+```{r}
 
-marriageage <- acs.fetch(geography = states, table.number = "B12007", 
-                         endyear = ENTER YEAR HERE, col.names = "pretty")
+AgeAtFirstMarriage2019 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=2019, 
+                                  survey="acs1")
+AgeAtFirstMarriage2019$Year <- 2019
 
-````
+AgeAtFirstMarriage2018 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2018$Year <- 2018
 
-As we've done in previous labs, we need to clean up the variable names that the ACS gives us.  The variable names provided by the ACS are very long.  What we do here is make them shorter to be more usable.  Then, we save the data as a dataset.  Finally, you'll display the data of median age at first marriage by state.
+AgeAtFirstMarriage2017 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2017$Year <- 2017
 
-````{r}
+AgeAtFirstMarriage2016 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2016$Year <- 2016
 
-marriageage.names <- acs.colnames(marriageage)
-new.names <- stringr::str_sub(marriageage.names, start = 63)
-acs.colnames(marriageage) <- new.names
+AgeAtFirstMarriage2015 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2015$Year <- 2015
 
-marriageage <- as.data.frame(estimate(marriageage))
+AgeAtFirstMarriage2014 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2014$Year <- 2014
 
-marriageage
+AgeAtFirstMarriage2013 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2013$Year <- 2013
 
-````
+AgeAtFirstMarriage2012 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2012$Year <- 2012
 
-The data that the ACS provides us has states listed as an ID, but not as a variable.  What we do here is create a variable for the state names that matches the state names in our allstates dataset.  Then, we merge our two datasets into a single dataset for mapping, which we'll call marriagemap.
+AgeAtFirstMarriage2011 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2011$Year <- 2011
 
-````{r}
+AgeAtFirstMarriage2010 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2010$Year <- 2010
 
-marriageage$region <- tolower(rownames(marriageage))
-marriagemap <- merge(allstates, marriageage, by="region")
+AgeAtFirstMarriage2009 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2009$Year <- 2009
 
-````
+AgeAtFirstMarriage2008 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2008$Year <- 2008
 
-Now, we'll make a graph of the median age at first marriage for males.  All of the code is there except for the name of the dataset.  Again, we've named our dataset marriagemap.  Go ahead and fill in the name of the dataset below where prompted.
+AgeAtFirstMarriage2007 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2007$Year <- 2007
 
-````{r}
+AgeAtFirstMarriage2006 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2006$Year <- 2006
 
-ggplot() + 
-  geom_polygon(data=ENTER DATASET NAME HERE, aes(x=long, y=lat, group=group, fill=marriagemap$Male), colour="white") +
-  scale_fill_continuous(low = "thistle2", high = "darkblue", guide="colorbar") +
-  theme_bw() + 
-  coord_map() +
-  labs(fill = "Median Age at First Marriage" , 
-       title = "Median Age at First Marriage, Males, 2017",
-       x="", y="") + 
-  scale_y_continuous(breaks=c()) + 
-  scale_x_continuous(breaks=c()) + 
-  theme(panel.border = element_blank(), legend.position = "bottom")
+AgeAtFirstMarriage2005 <- get_acs(geography="us", 
+                                  variables=c("B12007_001E", "B12007_002E"), 
+                                  year=ENTER YEAR HERE, 
+                                  survey="ENTER SURVEY NAME HERE")
+AgeAtFirstMarriage2005$Year <- 2005
 
-````
 
-And finally, let's make a map for females.  Go ahead and fill in the same dataset name where prompted below.
+```
 
-````{r}
+In the above syntax, we created a number of different datasets, one for each year of the data. To graph these data more easily, we want to combine these into one single data set. One way to do this is to use the "rbind()" command, which adds the rows of one data set to another to create a new, larger data set. This is appropriate for use when the columns of two data sets are identical.
 
-ggplot() + 
-  geom_polygon(data=ENTER DATASET NAME HERE, aes(x=long, y=lat, group=group, fill=marriagemap$Female), colour="white") +
-  scale_fill_continuous(low = "thistle2", high = "darkred", guide="colorbar") +
-  theme_bw() + 
-  coord_map() +
-  labs(fill = "Median Age at First Marriage" , 
-       title = "Median Age at First Marriage, Females, 2017", 
-       x="", y="") + 
-  scale_y_continuous(breaks=c()) + 
-  scale_x_continuous(breaks=c()) + 
-  theme(panel.border = element_blank(), legend.position = "bottom")
+```{r}
 
-````
+AgeAtFirstMarriage <- AgeAtFirstMarriage2019 %>%
+  rbind(AgeAtFirstMarriage2018) %>%
+  rbind(AgeAtFirstMarriage2017) %>%
+  rbind(AgeAtFirstMarriage2016) %>%
+  rbind(AgeAtFirstMarriage2015) %>%
+  rbind(AgeAtFirstMarriage2014) %>%
+  rbind(AgeAtFirstMarriage2013) %>%
+  rbind(AgeAtFirstMarriage2012) %>%
+  rbind(AgeAtFirstMarriage2011) %>%
+  rbind(AgeAtFirstMarriage2010) %>%
+  rbind(AgeAtFirstMarriage2009) %>%
+  rbind(AgeAtFirstMarriage2008) %>%
+  rbind(AgeAtFirstMarriage2007) %>%
+  rbind(AgeAtFirstMarriage2006) %>%
+  rbind(AgeAtFirstMarriage2005)
+
+```
+
+Let's graph median age at first marriage, by sex, for the United States, from 2005 to 2019. Within the "geom_line()" command, we include an argument for color so that the graph displays separate lines for males and females. Since B12007_001E corresponds to males, and B12007_002E corresponds to females, we can use the "variable" column in the data set to create two lines, one for males and one for females. 
+
+```{r}
+
+AgeAtFirstMarriagePlot <- ggplot(AgeAtFirstMarriage) +
+  geom_line(aes(x=Year, y=estimate, color=variable)) +
+  scale_x_continuous(limits=c(2005,2019), breaks=seq(2005,2019,2)) +
+  scale_color_manual(labels=c("Male", "Female"), values=c("blue", "red")) +
+  labs(title="Median Age At First Marriage, United States, 2005-2019", x="Year", y="Median Age", color="Sex") +
+  theme_bw()
+
+AgeAtFirstMarriagePlot
+
+```
+
+As we can see, median age at first marriage has changed quite a bit over this 15-year stretch. Let's see what this looks like for New York State. First, we'll need to pull in the data for NYS for each year, then we'll need to combine these separate data sets into a single data set with the national data. As you did for the national data, fill in the survey name, still for the 1-year ACS data (so the same as in the above example), the year for each command, and the state. We've used the FIPS code for New York State before, which is 36. The first example is completed for you.
+
+```{r}
+
+AgeAtFirstMarriage2019NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=2019, 
+                                    survey="acs1", 
+                                    state=36)
+AgeAtFirstMarriage2019NY$Year <- 2019
+
+AgeAtFirstMarriage2018NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2018NY$Year <- 2018
+
+AgeAtFirstMarriage2017NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2017NY$Year <- 2017
+
+AgeAtFirstMarriage2016NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2016NY$Year <- 2016
+
+AgeAtFirstMarriage2015NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2015NY$Year <- 2015
+
+AgeAtFirstMarriage2014NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2014NY$Year <- 2014
+
+AgeAtFirstMarriage2013NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2013NY$Year <- 2013
+
+AgeAtFirstMarriage2012NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2012NY$Year <- 2012
+
+AgeAtFirstMarriage2011NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2011NY$Year <- 2011
+
+AgeAtFirstMarriage2010NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2010NY$Year <- 2010
+
+AgeAtFirstMarriage2009NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2009NY$Year <- 2009
+
+AgeAtFirstMarriage2008NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2008NY$Year <- 2008
+
+AgeAtFirstMarriage2007NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2007NY$Year <- 2007
+
+AgeAtFirstMarriage2006NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2006NY$Year <- 2006
+
+AgeAtFirstMarriage2005NY <- get_acs(geography="state", 
+                                    variables=c("B12007_001E", "B12007_002E"), 
+                                    year=ENTER YEAR HERE, 
+                                    survey="ENTER SURVEY NAME HERE", 
+                                    state=ENTER STATE FIPS CODE HERE)
+AgeAtFirstMarriage2005NY$Year <- 2005
+
+AgeAtFirstMarriageUSandNY <- AgeAtFirstMarriage %>%
+  rbind(AgeAtFirstMarriage2019NY) %>%
+  rbind(AgeAtFirstMarriage2018NY) %>%
+  rbind(AgeAtFirstMarriage2017NY) %>%
+  rbind(AgeAtFirstMarriage2016NY) %>%
+  rbind(AgeAtFirstMarriage2015NY) %>%
+  rbind(AgeAtFirstMarriage2014NY) %>%
+  rbind(AgeAtFirstMarriage2013NY) %>%
+  rbind(AgeAtFirstMarriage2012NY) %>%
+  rbind(AgeAtFirstMarriage2011NY) %>%
+  rbind(AgeAtFirstMarriage2010NY) %>%
+  rbind(AgeAtFirstMarriage2009NY) %>%
+  rbind(AgeAtFirstMarriage2008NY) %>%
+  rbind(AgeAtFirstMarriage2007NY) %>%
+  rbind(AgeAtFirstMarriage2006NY) %>%
+  rbind(AgeAtFirstMarriage2005NY)
+
+```
+
+In this graph, in addition to the separate lines for sex, we also want to distinguish which lines are for the US as a whole, and which lines are for New York State. we'll add an argument within geom_line() for the "linetype," which allows us to have different kinds of lines (solid, dotted, dashed, etc.) representing another variable. Here, the variable for the geography (that is NYS vs. US), is "NAME", and we'll use that variable for the linetype. Fill in the X, Y, color, and linetype variables to produce this graph.
+
+```{r}
+
+AgeAtFirstMarriagePlot2 <- ggplot(data=AgeAtFirstMarriageUSandNY) +
+  geom_line(aes(x=ENTER X VARIABLE HERE, y=ENTER Y VARIABLE HERE, color=ENTER COLOR VARIABLE HERE, linetype=ENTER LINETYPE VARIABLE HERE)) +
+  scale_x_continuous(limits=c(2005,2019), breaks=seq(2005,2019,2)) +
+  scale_linetype_manual(values=c(2, 1)) +
+  scale_color_manual(labels=c("Male", "Female"), values=c("blue", "red")) +
+  labs(title="Median Age At First Marriage, \nUnited States and New York State, 2005-2019", x="Year", y="Median Age", color="Sex", linetype="Geography") +
+  theme_bw()
+
+AgeAtFirstMarriagePlot2
+
+```
+
+For extra credit, following the examples above, pull data for New Jersey from 2010 to 2019 from the 1-year ACS on median age at first marriage, and plot it. To do this, first you'll need to pull data using the "get_acs()" command, create a variable in each set of pulled data specifying the year, combine the data sets using the "rbind()" command, then plot it using "ggplot()". The FIPS code for New Jersey is 34.
+
+```{r}
+
+#EXTRA CREDIT
+#Enter syntax to gather data for New Jersey, and plot the results, following the examples above.
+
+```
+
+
+Now, go ahead and knit to PDF. Return to BlackBoard to submit your work on this lab and for comprehension and discussion questions.
+
