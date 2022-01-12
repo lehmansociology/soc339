@@ -1,33 +1,35 @@
 ---
 title: "Introduction to R"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-
-In this lab, we'll cover the basic functions of R to introduce you to how this program works.
+In this lab, we'll cover some of the basic functions of R to introduce you to how this program works.
 
 In these documents, the grey rectangles contain R code that you'll run.  To do basic calculations, you can type in the expression you'd like to calculate, similar to using a calculator.  To start, calculate 1+1 by running the expression below.  To run this expression, highlight the code you want to run, then click "Run" in this window on the top right.
  
-```{r, echo=FALSE, message=FALSE}
+```{r}
 
 1+1
 
 ```
 
-R can also store variables.  You can create a variable by typing in the name of the variable you'd like to create, then <-, then entering what the variable is equal to.  For example, let's tell R that the variable "x" is equal to 2.  Go ahead and run the code below.
+R can also store variables. You can create a variable by typing in the name of the variable you'd like to create, then <-, then entering what the variable is equal to. For example, let's tell R that the variable "x" is equal to 2.  Go ahead and run the code below.
 
 ```{r}
 
 x <- 2
 
-#A hashtag or pound sign (#) in the grey boxes are used to make annotations.  R knows not to run lines that start with #
+#A hashtag or pound sign (#) in the grey boxes are used to make annotations.
+#R knows not to run lines that start with #
 #How would we store y = 3?  Write you code below inside this grey box.
 
-
+YOUR SYNTAX HERE
 
 ```
 
-R will remember the value of x.  Now we can calculate expressions using the variable x.  Go ahead an calculate the variables below.
+R will remember the value of x. Now we can calculate expressions using the variable x. Go ahead an calculate the variables below.
 
 ```{r}
 
@@ -37,103 +39,112 @@ x/2
 
 x^3
 
-#What is x minus y?  Enter the code to make this calculation below, rather than the numerical answer.
+#What is x minus y? Although you can do this quick subtraction in your head, write in the syntax below to calculate this.
 
-
+YOUR SYNTAX HERE
 
 ```
 
-R saves data in datasets.  We're going to take a look at a dataset called "states".  First, we'll need to get states set up quickly.  Run the code below, but don't worry too much about the details of what we're doing in this step.
+R saves data in datasets. As an example, we're going to use data from the 2020 Census. To access census data, we will call some data from the Census Bureau using a command called "get_decennial". Don't worry about the details here - we will cover this in more detail later in the course. Run the lines below to pull the census data into RStudio.
 
 ```{r}
 
-data(state, list=character(), package="datasets", lib.loc=NULL, envir=.GlobalEnv)
-states<-data.frame(state.x77)
+library('soc339')
+library('lehmansociology')
+library('tidyr')
+library('tidycensus')
+
+census_api_key("YOUR CENSUS API KEY HERE")
+
+Census2020 <- get_decennial(geography="county", 
+                            variables=c("H1_002N", "P1_001N", "P5_001N"), 
+                            year=2020, 
+                            state="NY",
+                            sumfile="pl",
+                            output="wide")
+
+names(Census2020) <- c("GEOID", "County", "OccupiedHousing", "TotalPop", "GQPop")
 
 ```
 
-Let's take a look at this dataset called states that we just set up.  To print the data to the console in the program, just enter in the name of the dataset.  Run the name below to see the data.
+Let's take a look at this dataset called that we've named Census2020. Of course this does not include all the data from the 2020 Census, only the handful of variables we've pulled for New York State. To print the data to the console in the program, just enter in the name of the data set. Run the name below to see the data.
 
 ```{r}
 
-states
+Census2020
 
 ```
 
-We can also bring up the dataset in a new tab in this window to see the data in another format without taking up space in the console.  To do this, type the command View(states) into your console below.
+We can also bring up the dataset in a new tab in this window to see the data in another format without taking up space in the console. To do this, type the command View(Census2020) into your console below.
 
-As you can see, the states data contains some data about each state in the US.  Let's calculate the population density of each state.  The population listed is the population as of July 1, 1975.  The area is the area of each state in square miles.  To calculate the population per square mile, we need to divide the population by the area.  To tell R to use a particular variable, we first tell R the dataset we're using, then use the $ sign, then tell R the variable we want to use.  We'll create a new variable called PopulationDensity using calculations from the variables we already have.  Run the code below to create the variable.
+As you can see, the Census2020 dataset we just set up includes the number of occupied housing units, the total population, and the group quarters population for each county in New York State. Let's calculate persons per household, or the average household size. This is a measure of the average number of people living in a household. To do this, we first need to calculate the population living in households. We can calculate this as the total population minus the population living in group quarters. Then, we divide the household population by the number of occupied housing units.
+
+To tell R to use a particular variable, we first tell R the dataset we're using, then use the $ sign, then tell R the variable we want to use. We'll create a new variable called HouseholdPop using calculations from the variables we already have. Run the code below to create the variable.
 
 ```{r}
 
-states$PopulationDensity <- states$Population/states$Area
+Census2020$HouseholdPop <- Census2020$TotalPop - Census2020$GQPop
+
+Census2020$PersonsPerHousehold <- Census2020$HouseholdPop/Census2020$OccupiedHousing
 
 ```
 
-Now let's take a look at the results of this new variable.  Run the code below.
+Now let's take a look at the results of this new variable. Run the code below.
 
 ```{r}
 
-states$PopulationDensity
+Census2020$PersonsPerHousehold
 
-```
+```  
 
-You've just printed all the population density values of each state.  It's kind of hard to make sense of all the individual values, though.  So, let's calculate the mean and the median.
+You've just printed all the household population values of each county in New York State.  It's kind of hard to make sense of all the individual values, though. So, let's calculate the mean and the median.
 
 ```{r}
 
-mean(states$PopulationDensity)
+mean(Census2020$PersonsPerHousehold)
 
-median(states$PopulationDensity)
+median(Census2020$PersonsPerHousehold)
 
-#How would you calculate the mean and median of the variable Income in our states dataset?  Write and run your code below.
+#How would you calculate the mean and median of the variable TotalPop in our Census2020 dataset?
+#Write and run your code below.
 
-
+YOUR SYNTAX FOR THE MEAN OF TotalPop HERE
+YOUR SYNTAX FOR THE MEDIAN OF TotalPop HERE
 
 ```
 
-Now let's make a scatterplot using some of the other variables in the dataset.  Illiteracy represents the percent of the population that was illiterate in 1970.  HS.Grad represents the percent with a high school degree in 1970.
+Let's visualize the persons per household in a graph. To create and view a histogram, we'll use the syntax below. This graph will show us the number of counties in New York State that fall into set ranges.
 
 ```{r}
 
 library(ggplot2)
+library(scales)
 
-ggplot(states, aes(x=HS.Grad, y=Illiteracy)) + 
-    geom_point() + 
-    ggtitle("Plot of High School Graduation Rate by Percent Illiterate")
+PpHPlot <- ggplot(Census2020, aes(x=PersonsPerHousehold)) + 
+  geom_histogram(bins=10) + 
+  ggtitle("Persons per Household, New York State, 2020") +
+  theme_bw()
 
-```
-
-Does it look like there's a correlation here?  Let's use the cor() function to see the Pearson R.
-
-```{r}
-
-cor(states$HS.Grad, states$Illiteracy)
+PpHPlot
 
 ```
 
-What do you think?  -.657 indicates a moderate to strong negative correlation between these two variables.  A high percent illiterate is correlated with a low percent with a HS degree.  (This doesn't mean that one causes the other.  Correlation means there is a relationship between these two variables, but how the relationship works, we don't know.)
-
-Let's add the line of best fit to the scatterplot.
-
-```{r}
-
-ggplot(states, aes(x=HS.Grad, y=Illiteracy)) + 
-    geom_point() + 
-    geom_smooth(method=lm, se=FALSE) + 
-    ggtitle("Plot of High School Graduation Rate by Percent Illiterate")
-
-```
-
-Now you pick two variables that you'd like to see a scatterplot of.  Take a look at the states data.  Remember you can pull up the dataset by entering the command View(states) into the console below.  Use the same code as above, only change the x and y variables to ones that you'd like to see.  Note that R is case sensitive, so you will have to capitalize exactly as the variable names are displayed in the dataset.
+Now you pick a variable from the Census2020 dataset that you'd like to see a histogram of.  Take a look at the Census2020 data. Remember you can pull up the dataset with the command View(Census2020).  Use the same code as above, only change the x variable to one that you'd like to see. Note that R is case sensitive, so you will have to capitalize exactly as the variable names are displayed in the dataset.
 
 ```{r}
 
 #Enter the code for your scatterplot below
-ggplot(states, aes(x=YOUR X VARIABLE, y=YOUR Y VARIABLE)) + 
-    geom_point() + 
-    ggtitle("THE TITLE OF YOUR SCATTERPLOT")
+
+YourPlot <- ggplot(data=Census2020, aes(x=YOUR X VARIABLE HERE)) + 
+  geom_histogram() + 
+  scale_x_continuous(labels=comma) +
+  ggtitle("YOUR TITLE FOR THE PLOT HERE") +
+  theme_bw()
+
+YourPlot
 
 ```
 
-Once you've completed all chunks of this template, you are ready to knit to PDF.
+Once you've finished this lab, knit to PDF, and upload your PDF document in Blackboard.
+
+
