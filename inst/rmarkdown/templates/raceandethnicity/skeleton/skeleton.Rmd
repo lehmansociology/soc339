@@ -3,118 +3,178 @@ title: "Race and Ethnicity Lab"
 output: pdf_document
 ---
 
-In this lab, we will explore the racial and ethnic make up of six states in the US.  As always, start by loading the libraries.
- 
-```{r, echo=FALSE, message=FALSE}
-# Load your libraries here
+In this lab, we will explore the share of the population in race/Hispanic origin groups in the United States, using decennial census data. We will compare data from 2010 and 2020. Note that how race and Hispanic origin were asked and how responses were coded changed 2010 and 2020, so we need to interpret changes cautiously. Differences between 2010 and 2020 are due both to demographic changes, and to operational changes like adjustments to participant response options and processing of the data.
 
+As always, we start by loading our libraries. The "tidycensus" package allows us to pull data from the Census Bureau, the "tidyverse" package allow us to manipulate the data, and the "ggplot2" package allows us to visualize the data. For this lab, since we are pulling data from the Census Bureau, you will need to enter your Census API key.
+ 
+```{r}
+
+library('soc339')
 library('lehmansociology')
-library('acs')
-library('printr')
+library('tidycensus')
+library('tidyverse')
+library('ggplot2')
+
+census_api_key("YOUR CENSUS API KEY HERE")
 
 ```
 
-Similar to what we did in the internal migration lab, we'll start by creating geographies.  What this does is tell R which states we want data for.  Then we pull the data from the ACS.  Enter in the year 2017 in lines 31 and 32 where prompted to tell the ACS we want data for the year 2017.
+First, we pull data from the 2020 Census. Since we will be combining some of the categories, we pull the data in "wide" format, which means each variable is its own column. This makes it easier for us to add some of the columns together to create a new column.
 
-````{r}
+```{r}
 
-california <- geo.make(state = "CA")
-florida <- geo.make(state = "FL")
-newyork <- geo.make(state = "NY")
-wyoming <- geo.make(state = "WY")
-westvirginia <- geo.make(state = "WV")
-kentucky <- geo.make(state = "KY")
+Race_Ethnicity_2020 <- get_decennial(geography="us", 
+                                     variables=c("P2_002N", "P2_005N", "P2_006N", "P2_007N", "P2_008N", "P2_009N", "P2_010N", "P2_011N"), 
+                                     year=2020,
+                                     output="wide")
+
+Race_Ethnicity_2020$SomeOtherRace <- Race_Ethnicity_2020$P2_007N + Race_Ethnicity_2020$P2_009N + Race_Ethnicity_2020$P2_010N
+
+Race_Ethnicity_2020 <- Race_Ethnicity_2020[ ,c(2:5, 7, 10, 11)]
+
+names(Race_Ethnicity_2020) <- c("Geography", "Hispanic_or_Latino", "White_NH", "Black_NH", "Asian_NH", "Two_or_More_Races_NH", "Some_Other_Race_NH")
+
+```
+
+Note that the categories available from the census are broad categories, and in this lab we will focus on six groups - Hispanic or Latino, White (non-Hispanic), Black (non-Hispanic), Asian (non-Hispanic), Some Other Race (non-Hispanic), and Two or More Races (non-Hispanic). These are mutually exclusive groups, so no person is counted in multiple groups. This is only one way for us to utilize the data from the census on race and Hispanic origin categories. We will explore other ways these data are provided and can be organized on Blackboard.
+
+Graphing is easier with long format data. So our next step is to change the data from wide to long. Here, in short, we take columns 2 through 7 of our data, and change them into two columns - one specifying the name of the variable, the other the value of that variable.
+
+```{r}
+
+Race_Ethnicity_2020_Long <- pivot_longer(Race_Ethnicity_2020, 2:7, names_to="Group", values_to="value")
+
+```
+
+Go ahead and view the wide and long format versions of these data. They contain the same information, but organized differently. To view the datasets enter the names of our two datasets in the chunks below. If you can't remember the names of the datasets, look at the syntax above or look within the environment window.
+
+```{r}
+
+NAME OF WIDE DATASET
+
+```
+
+```{r}
+
+NAME OF LONG DATASET
+
+```
+
+For this lab, we are interested in the percent of the population within each group. So, we'll calculate a percentage, which is the number of people in each group divided by the total population, times 100. We then want to include variable specifying the year the data refer to, which is 2020.
+
+```{r}
+
+Race_Ethnicity_2020_Long$Percent <- Race_Ethnicity_2020_Long$value/331449281*100
+
+Race_Ethnicity_2020_Long$Year <- 2020
+
+```
+
+Let's try graphic these data. We'll start with a 100% bar graph. This will give us a bar split with sections showing the percent of the population in each group.
+
+```{r}
+
+Race_Ethnicity_2020_Plot <- ggplot(Race_Ethnicity_2020_Long,  aes(x="", y=Percent, fill=Group)) +
+  geom_bar(stat="identity", position="stack") +
+  scale_fill_brewer(type="qual", palette=1) +
+    geom_text(aes(label=round(Percent, 1)), position=position_stack(vjust=0.5), check_overlap=T) +
+  labs(title="Percent of Population by Race/Hispanic Origin Group, United States, 2020", fill="Race/Hispanic Origin Group") +
+  theme_void()
+
+Race_Ethnicity_2020_Plot
+
+```
+
+Notice that there is the "_" symbol instead of spaces in the names of the groups. The "_" is a holdover from when the groups were the names of their own columns in the wide format data, since there cannot be spaces in variable names in R. We'll remove the "_" symbols and replace them with spaces.
+
+Also notice that the order of the variables in alphabetical. This is the default for categorical variables in R. If we'd like to provide our own order, we can do wo with the "factor()" command. Let's provide an order for the data.
+
+Fill in a number for the color palette for the graph. You have a choice to select any number between 1 and 8. Try a color palette, see what you think, then try another by changing out the number and running the syntax again. Run the lines of syntax below, and note the differences in the graph here versus the graph from the previous chunk of syntax.
+
+```{r}
+
+Race_Ethnicity_2020_Long$Group <- gsub("\\_", " ", Race_Ethnicity_2020_Long$Group)
+
+Race_Ethnicity_2020_Long$Group <- factor(Race_Ethnicity_2020_Long$Group, levels=c("Hispanic or Latino", "White NH", "Black NH", "Asian NH", "Some Other Race NH", "Two or More Races NH"))
 
 
-selectedstates <- california + florida + newyork + wyoming + westvirginia + kentucky
+Race_Ethnicity_2020_Plot <- ggplot(Race_Ethnicity_2020_Long,  aes(x="", y=Percent, fill=Group)) +
+  geom_bar(stat="identity", position="stack") +
+  scale_fill_brewer(type="qual", palette=ENTER COLOR PALETTE NUMBER) +
+    geom_text(aes(label=round(Percent, 1)), position=position_stack(vjust=0.5), check_overlap=T) +
+  labs(title="Percent of Population by Race/Hispanic Origin Group, United States, 2020", fill="Race/Hispanic Origin Group") +
+  theme_void()
 
-race2017 <- acs.fetch(geography = selectedstates, table.number = "B02001", 
-                      endyear = ENTER YEAR HERE, col.names = "pretty")
-HispanicLatino <- acs.fetch(geography = selectedstates, table.number = "B03002",
-                            endyear = ENTER YEAR HERE, col.names = "pretty")
+Race_Ethnicity_2020_Plot
 
-````
+```
 
-The formatting of the variable names are a bit messy when we first pull them from the ACS, so what we're doing here is cleaning up those names.  You'll notice we've pulled two sets of data, one for race, and one for Hispanic or Latino ethnicity.  ACS gives us the data with states in the first column and the variables across the first row.  While this data is correct, the table is very wide and hard to read, so we transpose the datasets to have the variables we are interested listed down the first column and the states across the top.  At the end of this chunk of code, you'll display the transposed datasets as we have them so far.  You'll also notice when you knit to PDF, that even these transposed tables are very wide and may not fit on the page neatly.  That's ok.
+Another improvement we can make is to create a pie chart, rather than a 100% bar. The "coord_polar()" command will allow us to do this. This command takes the bar from the bar graph, and wraps it into a circle.
 
-````{r}
+```{r}
 
-race2017.names <- acs.colnames(race2017)
-new.names <- stringr::str_sub(race2017.names, start = 7)
-acs.colnames(race2017) <- new.names
+Race_Ethnicity_2020_Plot <- ggplot(Race_Ethnicity_2020_Long,  aes(x="", y=Percent, fill=Group)) +
+  geom_bar(stat="identity", position="stack") +
+  scale_fill_brewer(type="qual", palette=1) +
+    geom_text(aes(label=round(Percent, 1)), position=position_stack(vjust=0.5), check_overlap=T) +
+  labs(title="Percent of Population by Race/Hispanic Origin Group, United States, 2020", fill="Race/Hispanic Origin Group") +
+  coord_polar("y", start=0) +
+  theme_void()
 
-race <- as.data.frame(estimate(race2017))
+Race_Ethnicity_2020_Plot
 
-HispanicLatino.names <- acs.colnames(HispanicLatino)
-new1.names <- stringr::str_sub(HispanicLatino.names, start = 29)
-acs.colnames(HispanicLatino) <- new1.names
+```
 
-HispanicLatino <- as.data.frame(estimate(HispanicLatino))
+Now that we've produced our visualization of 2020 data, let's add in 2010 data. The lines below import and process the data in much the same way that we did for the 2020 data. The last line in this chunk combined our 2020 and 2010 data into a single data set so that we can graph data from both time points together.
 
-racetransposed <- t(race)
+Enter the year 2010 in the "get_decennial()" command to specify we want to pull 2010 Census data. Further below, enter syntax to calculate the percentages using the "value" variable and the total population of the United States in 2010, which was 308,745,538. Remember not to use commas when entering the total population.
 
-HispanicLatinotransposed <- t(HispanicLatino)
+```{r}
 
-racetransposed
+Race_Ethnicity_2010 <- get_decennial(geography="us", 
+                                     variables=c("P005010", "P005003", "P005004", "P005005", "P005006", "P005007", "P005008", "P005009"), 
+                                     year=ENTER YEAR HERE,
+                                     output="wide")
 
-HispanicLatinotransposed
+Race_Ethnicity_2010$SomeOtherRace <- Race_Ethnicity_2010$P005005 + Race_Ethnicity_2010$P005007 + Race_Ethnicity_2010$P005008
 
-````
+Race_Ethnicity_2010 <- Race_Ethnicity_2010[ ,c(2:5, 7, 10, 11)]
 
-Since there are spaces in the variable names, we'll need to change those spaces to periods to make them easier to use in the code.  We'll also want to get rid of other odd characters like colons and commas that R has trouble with.  The code below cleans up the variables names to make them usable.
+names(Race_Ethnicity_2010) <- c("Geography", "Hispanic_or_Latino", "White_NH", "Black_NH", "Asian_NH", "Two_or_More_Races_NH", "Some_Other_Race_NH")
 
-````{r}
+Race_Ethnicity_2010_Long <- pivot_longer(Race_Ethnicity_2010, 2:7, names_to="Group", values_to="value")
 
-new1.names <- str_replace_all(str_trim(new1.names), " ", ".")
-new1.names <- str_replace_all(str_trim(new1.names), ":", "")
-new1.names <- str_replace_all(str_trim(new1.names), ",", "")
-colnames(HispanicLatino) <- new1.names
+Race_Ethnicity_2010_Long$Percent <- CALCULATE PERCENT HERE
 
-new.names <- str_replace_all(str_trim(new.names), " ", ".")
-new.names <- str_replace_all(str_trim(new.names), ":", "")
-new.names <- str_replace_all(str_trim(new.names), ",", "")
-colnames(race) <- new.names
+Race_Ethnicity_2010_Long$Year <- 2010
 
-````
+Race_Ethnicity_2010_Long$Group <- gsub("\\_", " ", Race_Ethnicity_2010_Long$Group)
 
-It's easier to work with one single dataset.  Here, we are taking the two variables we want from the HispanicLatino dataset and add them to the race dataset.  This way, we only need to think about one dataset.  Two two variables we are adding are Not.Hispanic.or.Latino and Hispanic.or.Latino.
+Race_Ethnicity_2010_Long$Group <- factor(Race_Ethnicity_2010_Long$Group, levels=c("Hispanic or Latino", "White NH", "Black NH", "Asian NH", "Some Other Race NH", "Two or More Races NH"))
 
-````{r}
+Race_Ethnicity <- rbind(Race_Ethnicity_2020_Long, Race_Ethnicity_2010_Long)
 
-race$Not.Hispanic.or.Latino <- HispanicLatino$Not.Hispanic.or.Latino
-race$Hispanic.or.Latino <- HispanicLatino$Hispanic.or.Latino
+```
 
-````
+The main difference in the syntax below and the syntax for our visualization of the 2020 data is the inclusion of the "facet_wrap()" command, which allows us to produce multiple parallel graphics separated by a particular variable. In this case, we are separating by year. The syntax below will produce two pie charts - one for 2010, and one for 2020. This allows us to view data from the two time points side by side. 
 
-The ACS provides the data in counts (number of people), but it is easier to interpret percents, especially if we are comparing across states.  Below, we are calculating percentages rather than counts for the variables we are interested in using.
+Enter in our Y variable and the fill variable. Look at the syntax from previous chunks as an example. The Y and fill variables are the same as they were before. Also, go ahead a pick a color palette here again as you did before..
 
-````{r}
+```{r}
 
-race$percent_total <- round(100*race$Total/race$Total)
+Race_Ethnicity_10_and_20_Plot <- ggplot(Race_Ethnicity,  aes(x="", y=ENTER Y VARIABLE, fill=ENTER FILL VARIABLE)) +
+  geom_bar(stat="identity", position="stack") +
+  scale_fill_brewer(type="qual", palette=ENTER COLOR PALETTE NUMBER) +
+  geom_text(aes(label=round(Percent, 1)), position=position_stack(vjust=0.5), check_overlap=T) +
+  facet_wrap(~Year, strip.position="bottom") +
+  labs(title="Percent of Population by Race/Hispanic Origin Group, United States, 2010 and 2020", fill="Race/Hispanic Origin Group") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  theme(strip.text=element_text(size=11))
 
-race$percent_White.alone <- round(100*race$White.alone/race$Total)
-race$percent_Black.alone <- round(100*race$Black.or.African.American.alone/race$Total)
-race$percent_American.Indian.alone <- round(100*race$American.Indian.and.Alaska.Native.alone/race$Total)
-race$percent_Asian.alone <- round(100*race$Asian.alone/race$Total)
-race$percent_Pacific.Islander.alone <- round(100*race$Native.Hawaiian.and.Other.Pacific.Islander.alone/race$Total)
-race$percent_Some.other.race.alone <- round(100*race$Some.other.race.alone/race$Total)
-race$percent_Two.or.more.races <- round(100*race$Two.or.more.races/race$Total)
+Race_Ethnicity_10_and_20_Plot
 
-race$percent_Not.Hispanic.or.Latino <- round(100*race$Not.Hispanic.or.Latino/race$Total)
-race$percent_Hispanic.or.Latino <- round(100*race$Hispanic.or.Latino/race$Total)
+```
 
-````
+Go ahead a knit to PDF, upload your results to Blackboard, and continue with the discussion and comprehension questions.
 
-Now, to separate out the new variables we created with percents, we're creating a new dataset that only includes the new variables measured in percents.  Then, since the datasets are easier to read if we flip the columns and rows, we transpose the new dataset.  The last line of code displays your completed table. I've left the dataset names for these final datasets blank.  Go ahead and enter in a name for these datasets.  You can name them anything you would like, as long as the corresponding dataset names match.
-
-````{r}
-
-PERCENT DATA SET NAME <- dplyr::select(race, percent_total, percent_White.alone, percent_Black.alone, percent_American.Indian.alone, percent_Asian.alone, percent_Pacific.Islander.alone, percent_Some.other.race.alone, percent_Two.or.more.races, percent_Not.Hispanic.or.Latino, percent_Hispanic.or.Latino)
-
-TRANSPOSED DATA SET NAME <- t(PERCENT DATA SET NAME)
-
-TRANSPOSED DATA SET NAME
-
-````
-
-Back in Blackboard, you'll answer questions based on this completed table.
