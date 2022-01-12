@@ -3,67 +3,105 @@ title: "Population Aging Lab"
 output: pdf_document
 ---
 
-In this lab we will look at Population Pyramids.  Population Pyramids are a type of diagram that show the number of individuals at each age in a population, split by sex.  These diagrams allow us to see in a visual way if a population is growing, stable, or shrinking.  It also allows us to see the relative number of individuals at a given age, compared to other ages.  As always, let's start by loading our libraries.
+In this lab we will look at Population Pyramids. Population Pyramids are a type of diagram that show the number of individuals at each age in a population, split by sex. These diagrams allow us to visualize if a population is growing, stable, or shrinking. They also allows us to see the relative number of individuals at a given age, compared to other ages. As always, let's start by loading our libraries. The "HMDHFDplus" package allows us to pull data from the Human Fertility Database and the Human Mortality Database. The "tidyr" package allows us to manipulate the data. And, the "ggplot2" and "scales" packages allow us to create graphics.
  
-```{r, echo=FALSE, message=FALSE}
-# Load your libraries here
+```{r}
 
+library('soc339')
 library('lehmansociology')
 library('HMDHFDplus')
+library('tidyr')
+library('ggplot2')
+library('scales')
 
 ```
 
-We'll use data from mortality.org for this lab.  First, let's get the population data for the US.  Enter in your usename and password below.
+We'll use data from mortality.org for this lab. First, let's get the population data for the US. Enter in your username and password below.
 
 ```{r}
 
 population_USA <- readHMDweb(CNTRY = 'USA', item = 'Population', 
-                             username = 'YOUR MORTALITY.ORG USERNAME', 
-                             password = 'YOUR MORTALITY.ORG PASSWORD')
+                             username = 'YOUR MORTALITY.ORG USERNAME HERE', 
+                             password = 'YOUR MORTALITY.ORG PASSWORD HERE')
+
+population_USA <- population_USA[,c(1,2,4,5)]
+names(population_USA) <- c("Year", "Age", "Female", "Male")
+
+population_USA_long <- pivot_longer(population_USA, cols=c("Female", "Male"), names_to="Gender", values_to="Population")
 
 ```
 
-We'll use a special function that has been set up specifically for Lehman for this lab.  This means that if you use R in the future outside of Lehman's RStudio, this function will not be available.  But within in this lab, the function below will work to create a population pyramid.  Within the function called populationPyramid, we first specify the dataset, then the year, then the country name.  Go ahead an run the completed example below.  There is no need to alter anything in this example.
+Let's start by visualizing the population pyramid for the United States in 1940. You'll notice within the "ggplot()" command, we use "subset()". The "subset" command allows us to pick only certain rows from the data. Here, we want to only pick the rows that correspond to the year 1940. Go ahead an run the completed example below. There is no need to alter anything in this example.
 
 ```{r}
 
-populationPyramid(population_USA, 1940, 'United States')
+PopPyramid1940_USA <- ggplot(subset(population_USA_long, Year %in% "1940")) +
+  geom_bar(aes(x=Age, fill=Gender, y=ifelse(Gender=="Male", -Population, Population)), 
+           stat="identity") +
+  scale_y_continuous(limits=c(-2500000,2500000), breaks=seq(-2500000,2500000,500000), 
+                     labels=c("2.5M","2.0M","1.5M","1.0M","0.5M","0","0.5M","1.0M","1.5M","2.0","2.5M")) +
+  labs(title="Population Pyramid, United States, 1940", y="Population", x="Age", fill="Sex") +
+  coord_flip() +
+  theme_bw()
+
+PopPyramid1940_USA
 
 ```
 
-We'll create a population pyramid for every 10 years up to 2010.  In the code below, fill in the dataset name for the US population data.  If you're not sure the name of the dataset, take a close look at the example above.
+We'll create a population pyramid for every 10 years up to 2010. In the syntax below, we first select only years ending in "0," so that we have data for 1940, 1950, 1960, and so on through 2010. Then, in the "ggplot()" command, we use "facet_wrap()" to display a separate population pyramid for each decade. In the "ggplot()" command, fill in the data set name. Here we're using population_USA_long_decade. Also fill in the X and fill variables, which match from the example for 1940 above. The fill variable determines the color of the bars displayed.
 
 ```{r}
 
-populationPyramid(ENTER THE US DATA SET NAME, 1950, 'United States')
-populationPyramid(ENTER THE US DATA SET NAME, 1960, 'United States')
-populationPyramid(ENTER THE US DATA SET NAME, 1970, 'United States')
-populationPyramid(ENTER THE US DATA SET NAME, 1980, 'United States')
-populationPyramid(ENTER THE US DATA SET NAME, 1990, 'United States')
-populationPyramid(ENTER THE US DATA SET NAME, 2000, 'United States')
-populationPyramid(ENTER THE US DATA SET NAME, 2010, 'United States')
+population_USA_long_decade <- population_USA_long[which(population_USA_long$Year=="1940"|population_USA_long$Year=="1950"|population_USA_long$Year=="1960"|population_USA_long$Year=="1970"|population_USA_long$Year=="1980"|population_USA_long$Year=="1990"|population_USA_long$Year=="2000"|population_USA_long$Year=="2010"),]
+
+PopPyramids_USA <- ggplot(data=ENTER THE DATA SET NAME HERE) +
+  geom_bar(aes(x=ENTER THE X VARIABLE HERE, fill=ENTER THE FILL VARIABLE HERE, y=ifelse(Gender=="Male", -Population, Population)), 
+           stat="identity") +
+  scale_y_continuous(limits=c(-2500000,2500000), breaks=seq(-2500000,2500000,500000), 
+                     labels=c("2.5M","2.0M","1.5M","1.0M","0.5M","0","0.5M","1.0M","1.5M","2.0","2.5M")) +
+  labs(title="Population Pyramids, United States, 1940-2010", y="Population", x="Age", fill="Sex") +
+  facet_wrap(~Year, ncol=4) +
+  coord_flip() +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=1))
+
+PopPyramids_USA
 
 ```
 
-Now let's do the same for Japan.  Fill in your mortality.org username and password to get Japan's population data.
+Now let's do the same for Japan. Fill in your mortality.org username and password to get Japan's population data. The syntax below first pulls in the data for Japan, then selects only the years ending in "0."
 
 ```{r}
 
-population_JPN <- readHMDweb(CNTRY = 'JPN', item = 'Population', username = 'YOUR MORTALITY.ORG USERNAME', password = 'YOUR MORTALITY.ORG PASSWORD')
+population_JPN <- readHMDweb(CNTRY = 'JPN', item = 'Population', 
+                             username = 'YOUR MORTALITY.ORG USERNAME HERE', 
+                             password = 'YOUR MORTALITY.ORG PASSWORD HERE')
+
+population_JPN <- population_JPN[,c(1,2,4,5)]
+names(population_JPN) <- c("Year", "Age", "Female", "Male")
+
+population_JPN_long <- pivot_longer(population_JPN, cols=c("Female", "Male"), names_to="Gender", values_to="Population")
+
+population_JPN_long_decade <- population_JPN_long[which(population_JPN_long$Year=="1950"|population_JPN_long$Year=="1960"|population_JPN_long$Year=="1970"|population_JPN_long$Year=="1980"|population_JPN_long$Year=="1990"|population_JPN_long$Year=="2000"|population_JPN_long$Year=="2010"),]
 
 ```
 
-Now go ahead an fill in the dataset and years for Japan's population pyramids.  Start with the year 1950, and create a pyramid for every 10 years up to 2010 (that is 1950, 1960, 1970, etc.).  If you're not sure the dataset name, take a look at the name of the dataset that is created by the code in line 50.
+Now let's create population pyramids from the data for Japan to match the population pyramids we made for the United States. Using the above examples as guidelines, fill in the data set name (population_JPN_long_decade), the X and fill variables. Also fill in the title, X, and Y labels in the "labs()" command. These pyramids mirror what we did above for the US, but for Japan from 1950-2010.
 
 ```{r}
 
-populationPyramid(ENTER THE JAPAN DATASET NAME, ENTER THE YEAR, 'Japan')
-populationPyramid(ENTER THE JAPAN DATASET NAME, ENTER THE YEAR, 'Japan')
-populationPyramid(ENTER THE JAPAN DATASET NAME, ENTER THE YEAR, 'Japan')
-populationPyramid(ENTER THE JAPAN DATASET NAME, ENTER THE YEAR, 'Japan')
-populationPyramid(ENTER THE JAPAN DATASET NAME, ENTER THE YEAR, 'Japan')
-populationPyramid(ENTER THE JAPAN DATASET NAME, ENTER THE YEAR, 'Japan')
-populationPyramid(ENTER THE JAPAN DATASET NAME, ENTER THE YEAR, 'Japan')
+PopPyramids_JPN <- ggplot(data=ENTER DATA SET NAME HERE) +
+  geom_bar(aes(x=ENTER X VARIABLE HERE, fill=ENTER FILL VARIABLE HERE, y=ifelse(Gender=="Male", -Population, Population)), 
+           stat="identity") +
+  scale_y_continuous(limits=c(-1500000,1500000), breaks=seq(-1500000,1500000,500000), 
+                     labels=c("1.5M","1.0M","0.5M","0","0.5M","1.0M","1.5M")) +
+  labs(title="ENTER DIAGRAM TITLE HERE", y="ENTER Y AXIS LABEL HERE", x="ENTER X AXIS LABEL HERE") +
+  facet_wrap(~Year, ncol=4) +
+  coord_flip() +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=1))
+
+PopPyramids_JPN
 
 ```
 
