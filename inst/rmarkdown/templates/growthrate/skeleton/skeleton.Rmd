@@ -1,109 +1,135 @@
 ---
 title: "Growth Rates Lab"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-In this lab we'll explore the growth rates of the US and Japan, as well as the expected time to double the population.  As always, we'll start with loading our libraries.
- 
-```{r, echo=FALSE, message=FALSE}
+In this lab, we will explore the growth rates of the United States population for each decade from 1910 to 2020. To do this, we will pull data from the US Census Bureau website (https://www.census.gov/data/tables/time-series/dec/popchange-data-text.html). Feel free to open this web page and take a look at the data in your browser before we begin. 
 
+And, as always, we will start this lab by loading our necessary libraries. The "dplyr" package give us the tools we will need to manipulate the data into the format we need for graphing. The "ggplot2" package will allow us to graph the data, and the "scales" package lets us more easily label the y-axis on the graphs with commas in the numbers.
+
+```{r}
+
+library('soc339')
 library('lehmansociology')
-library('HMDHFDplus')
+library('dplyr')
 library('ggplot2')
+library('scales')
 
 ```
 
-As we've done before, we'll start with importing the annual population data for the US.  In the code below you'll see that we're using the population given for the start and end of each year. You may also notice that we're only using dates from 1950 on in this lab.  You'll need to enter in your username and password for mortality.org to pull the data.  Once you've entered in your usename and password, you can run the code below.
+The first step is to import the data into our R environment. To do this, we will read a csv file from the Census Bureau website. Then we will remove commas from the population numbers in the data to allow R to use them as numbers. Go ahead and run the lines below.
 
 ```{r}
 
-populationUSA <- readHMDweb(CNTRY = 'USA', item = "Population", username = "YOUR MORTALITY.ORG USERNAME", password = "YOUR MORTALITY.ORG PASSWORD")
-total_pop_by_year_USA <- aggregate(x=populationUSA[4:9], by=list(Year=populationUSA$Year), FUN=sum)
-total_pop_by_year_USA <- dplyr::select(total_pop_by_year_USA, Year, Total1, Total2)
-total_pop_by_year_USA <- dplyr::rename(total_pop_by_year_USA, PopJan=Total1, PopDec=Total2)
-total_pop_by_year_USA<-subset(total_pop_by_year_USA, Year>=1950)
+CensusPop <- read.csv("https://www2.census.gov/programs-surveys/decennial/2020/data/apportionment/apportionment.csv")
+
+CensusPop$Resident.Population <- as.numeric(gsub("\\,","",CensusPop$Resident.Population))
 
 ```
 
-The Growth Rate is a calculation of the percentage increase in population size over a given period.  Here, we're looking at annual growth rates since we're looking at the change from January 1st to December 31st in a given year.  To calculate this, we subtract the population in January from the population in December to get the difference in population over the period, then we divide this by the population in January to see the percentage change since the start.  Since this calculation is really a percentage, it can be easier to interpret after multipying by 100.
+Let's graph the population of the United States from 1910 to 2020. The Decennial Census, conducted every 10 years, provides the country with its official population enumeration. This enumeration is used for many purposes, one of which is determining the number of representatives for each state in congress. The apportionment data, as this is called, provides us with the official population counts for the US as a whole and for each of the 50 states. Here, we will look at the population of the country as a whole.
 
-  Growth Rate = (End Population - Start Population)/Start Population * 100
+The "scale_y_continuous()" and "scale_x_continuous()" commands allow us to specify settings for the x and y axes. In the limits option for the y axis, set 0 and 350,000,000 as the minimum and maximum. For the breaks option for the x axis, enter 1910 as our minimum, 2020 as our maximum, and breaks every 10 years. Remember not to use commas in numbers within R commands.
 
 ```{r}
 
-total_pop_by_year_USA$Growth <- (total_pop_by_year_USA$PopDec - total_pop_by_year_USA$PopJan) / total_pop_by_year_USA$PopJan
-total_pop_by_year_USA$GrowthRate <- total_pop_by_year_USA$Growth*100
+PopulationPlot <- ggplot() +
+  geom_line(data=subset(CensusPop, Name %in% c("United States")), aes(x=Year, y=Resident.Population)) +
+  scale_y_continuous(limits=c(ENTER Y MINIMUM HERE, ENTER Y MAXIMUM HERE), breaks=seq(0,350000000,50000000), labels=comma) +
+  scale_x_continuous(breaks=seq(ENTER X MINIMUM HERE, ENTER X MAXIMUM HERE, ENTER DISTANCE BETWEEN X BREAKS HERE)) +
+  labs(title="Population, United States, 1910-2020", x="Year", y="Population") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1))
+
+PopulationPlot
 
 ```
 
-Now let's plot the growth rate.  Fill in the name of the dataset where our variables are found, and our x and y variables.  On the x axis, we'll want years displayed, and on the y axis we'll want the growth rate displayed.  If you'd like to see a which variables we have available, enter the command View(total_pop_by_year_USA) into the console below, or click on the total_pop_by_year_USA data on the right.
+Looking at the population figures themselves is one way to view change over time. Another way is to look at the percent change from one decade to the next, which is a form of the growth rate. The data from the Census Bureau provides us with the percent change from the previous census. The next graph will show the percent change from previous census on the y axis and the census year on the x axis.
+
+The labs() command allows us to set names for the x and y axes, and a title for the graph. Go ahead and enter names for the axes and a graph title. Use the information in the the paragraph above, and look at clues for the x and y variables in the geom_line() command to accurately pick names and the title.
 
 ```{r}
 
-ggplot(ENTER THE DATASET NAME HERE, aes(x = ENTER THE X VARIABLE HERE, y = ENTER THE Y VARIABLE HERE)) +
-  geom_line() + 
-  ggtitle("US Growth Rate 1950-2017") +
-  expand_limits(y = 0)
+GrowthRatePlot <- ggplot() +
+  geom_line(data=subset(CensusPop, Name %in% c("United States")), aes(x=Year, y=Percent.Change.in.Resident.Population)) +
+  scale_y_continuous(limits=c(0,40)) +
+  scale_x_continuous(breaks=seq(1910,2020,10)) +
+  labs(title="ENTER GRAPH TITLE HERE", x="ENTER X AXIS LABEL HERE", y="ENTER Y AXIS LABEL HERE") +
+  theme_bw()
+
+GrowthRatePlot
 
 ```
 
-Growth rates are not a very intuitive measure, so instead it can be helpful to look at Doubling Time, sometimes refered to as T.  Doubling time is a measure of how many years it would take to double the current population size, assuming that the growth rate does not change.  Of course the growth rate does change, so this isn't a prediction of how long it will take to double a population, but doubling time does give us a more intuitive way to think about growth.  We'll calculate the doubling time below and then graph it.  For the graph, go ahead and enter in the dataset, x, and y variables.
+Another way to explore population growth is the doubling time. This is the number of years it would take for the population to double at the current growth rate. A rough calculation of this is 69.3 divided by the growth rate. Since we are looking at the percent growth over the decade, we need to multiply the result by 10 to get an approximation of how many years, rather than decades, it would take for the population to double. Note that this is not the exact calculation, but it is a quick way to do a rough approximation of doubling time.
+
+In the graph below, we'll have displayed both the growth rate and the doubling time. Take a look at the relationship between the two. As one rises, the other falls, and vice versa. That's because a population that is growing faster with take less time to double than a population that's growing more slowly.
+
+The ggplot() command can give us many different types of plots. Here, we want a line graph, but ggplot can also produce scatterplots, bar graphs, etc. the command "geom_line()" gives us a line graph. We have two lines we want to plot for this graph, one is the doubling time, the other is the growth rate. For each of these, specify "geom_line" to indicate that we want lines on the graph.
 
 ```{r}
 
-total_pop_by_year_USA$DoublingTime <- 69.3/total_pop_by_year_USA$GrowthRate
+CensusPop$DoublingTime <- 69.3/CensusPop$Percent.Change.in.Resident.Population*10
 
-ggplot(ENTER THE DATASET NAME HERE, aes(x = ENTER THE X VARIABLE HERE, y = ENTER THE Y VARIABLE HERE)) +
-  geom_line() + 
-  ggtitle("US Doubling Time 1950-2015") +
-  expand_limits(y = 0)
+DoublingTimePlot <- ggplot() +
+  ENTER GEOMETRY HERE(data=subset(CensusPop, Name %in% c("United States")), aes(x = Year, y = DoublingTime, color="Doubling Time (Years)")) + 
+  ENTER GEOMETRY HERE(data=subset(CensusPop, Name %in% c("United States")), aes(x = Year, y = Percent.Change.in.Resident.Population, color="Growth Rate")) +
+  scale_x_continuous(breaks=seq(1910,2020,10)) +
+  scale_y_continuous(breaks=seq(0,100,10)) +
+  labs(title="Doubling Time and Growth Rate, United States, 1910-2020", x="Decade (Ending Year)", y="Doubling Time (Years)", color="Variable") +
+  expand_limits(y = 0) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1))
+
+DoublingTimePlot
 
 ```
 
-It's great to know what's going on in the US, but let's take a look at Japan to compare and contrast to the US.  Below we'll pull the annual population data for Japan from mortality.org.  Enter in your username and password, then run the code below.
+Now that we've explored growth of the US population since 1910, let's take a look at New York State. Fill in the state name within the geom_line() command, where we tell ggplot which rows of the data to use for the graph, and in the labs() command, where we tell ggplot what to set the title of the graph to.
 
 ```{r}
 
-populationJPN <- readHMDweb(CNTRY = 'JPN', item = "Population", username = "YOUR MORTALITY.ORG USERNAME", password = "YOUR MORTALITY.ORG PASSWORD")
-total_pop_by_year_JPN <- aggregate(x=populationJPN[4:9], by=list(Year=populationJPN$Year), FUN=sum)
-total_pop_by_year_JPN <- dplyr::select(total_pop_by_year_JPN, Year, Total1, Total2)
-total_pop_by_year_JPN <- dplyr::rename(total_pop_by_year_JPN, PopJan=Total1, PopDec=Total2)
-total_pop_by_year_JPN<-subset(total_pop_by_year_JPN, Year>=1950)
+GrowthRateState <- ggplot() +
+  geom_line(data=subset(CensusPop, Name %in% c("New York")), aes(x=Year, y=Resident.Population)) +
+  scale_y_continuous(labels=comma, breaks=seq(8000000,20000000,2000000)) +
+  scale_x_continuous(breaks=seq(1910,2020,10)) +
+  labs(title="Resident Population, New York State, 1910-2020", x="Decade (Ending Year)", y="Population") +
+  theme_bw()
+
+GrowthRateState
 
 ```
 
-Now we'll need to calculate the growth rate for Japan.  Go ahead and enter in the equation for the growth rate.  You can reference the corresponding section for US data, but note that you'll need to modify the name of the dataset uses, even if the variable names are the same.  For the US, our dataset is called total_pop_by_year_USA, for Japan it's called total_pop_by_year_JPN.  In the first line you'll subtract the start population from the end population, then divide by the start population.  In the second line, you'll multiply this by 100.
+Now let's look at the growth rate and the doubling time. We've already calculated the doubling time earlier in this lab. When we ran the equation for the doubling time, it applied to the full data set, including for the US and all states.
+
+Notice that the growth rate drops below 0 in 1980, and that the "doubling" time is negative. Here, we are looking at the "half-life" of the population. Half-life is the time it would take for the population to decrease by half.
+
+In the "theme()" command, we can make aesthetic adjustments to the graph. Within the "theme()" command, the "axis.x.text" option allows us to make adjustments to the text on the x axis. Within that, the "angle" options allows us to rotate the x axis labels. Enter "45" for the angle of the text to rotate the labels on a 45 degree angle. The "hjust" and "vjust" options allow us to modify the horizontal (h) and vertical (v) alignment of the text, similar to right alignment, left alignment, or centered alignment in word. Specifying 0 for hjust and vjust is like left alignment, 1 is light right alignment, and 0.5 is centered. Enter 1 for both the "hjust" and "vjust" options to have the right edge of the axis labels align with the tick marks on the graph.
 
 ```{r}
 
-total_pop_by_year_JPN$Growth <- YOUR CALCULATION HERE
-total_pop_by_year_JPN$GrowthRate <- YOUR CALCULATION HERE
+DoublingTimeStatePlot <- ggplot() +
+  geom_line(data=subset(CensusPop, Name %in% c("New York")), aes(x = Year, y = DoublingTime, color="Doubling Time or Half-Life (Years)")) + 
+  geom_line(data=subset(CensusPop, Name %in% c("New York")), aes(x = Year, y = Percent.Change.in.Resident.Population, color="Growth Rate")) +
+  scale_x_continuous(breaks=seq(1910,2020,10)) +
+  labs(title="Doubling Time and Growth Rate, New York State, 1910-2020", x="Decade (Ending Year)", y="Doubling Time or Half-Life (Years)", color="Variable") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=ENTER ANGLE HERE, hjust=ENTER HJUST VALUE HERE, vjust=ENTER VJUST VALUE HERE))
+
+DoublingTimeStatePlot
 
 ```
 
-Now let's plot the growth rate for Japan.
+For extra credit, create a plot that shows the growth rates and doubling times for the US and New York State on the same graph. You can copy, paste, and modify from the ggplot codes within this lab. Note that you will need multiple geom_line() commands each of the lines on the graph. So far in this lab we have used the "color()" option to set different colors for lines on the graph. You can also use the "linetype()" option in the same way to set whether a line is solid, dashed, etc.
 
 ```{r}
 
-ggplot(total_pop_by_year_JPN, aes(x = Year, y = GrowthRate)) +
-  geom_line() + 
-  ggtitle("Japan Growth Rate 1950-2017") +
-  expand_limits(y = 0)
+#ENTER EXTRA CREDIT PLOT HERE
 
 ```
 
-And finally, let's calculate the doubling time for Japan and plot it.  For this graph, you'll notice that we've removed the cases after 2008.  That's becuase, as you saw in the growth rates lab, the population growth was negative in 2009 and after, indicating a shrinking population.  Our calculation for doubling time no longer makes sense if the population is getting smaller rather than larger.  Since the doubling time calculations for 2009 and after are not interpretable, we limit our graph to years 2008 and prior.
+Now, go ahead and knit to PDF. Return to BlackBoard to submit your work on this lab and for comprehension and discussion questions.
 
-```{r}
-
-total_pop_by_year_JPN$DoublingTime <- 69.3/total_pop_by_year_JPN$GrowthRate
-
-ggplot(total_pop_by_year_JPN, aes(x = Year, y = DoublingTime)) + 
-  geom_line() + 
-  scale_x_continuous(limits=c(1950,2008)) +
-  scale_y_continuous(limits=c(-200,2000)) +
-  ggtitle("Japan Doubling Time 1950-2008")
-       
-```
-
-Once you've completed this template, knit to PDF and return to Blackboard to complete the rest of the lab.
