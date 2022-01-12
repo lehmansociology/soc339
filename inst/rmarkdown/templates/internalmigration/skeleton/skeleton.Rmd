@@ -1,151 +1,121 @@
 ---
 title: "Internal Migration Lab"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-In this lab, we'll take a look at household movement within and into the five boroughs of New York City between 2016 and 2017.  As always, we'll start by loading our libraries.
- 
-```{r, echo=FALSE, message=FALSE}
-# Load your libraries here
+In this lab, we will look at net domestic migration. Net domestic migration is the balance of people moving into and moving out of a place from elsewhere in the United States. To explore this, we will use data from the US Census Bureau's Population Estimates Program. Each year, the Population Estimates Program released population estimates and components of change for various levels of geography. To produce these estimates, they use the Population Balancing Equation, which is
 
+Target Population = Base Population + Births - Deaths + Net Domestic Migration + Net International Migration
+
+Births, deaths, net domestics and net international migration are each components of change.
+
+As always, we will start by loading our libraries. The "tidycensus" package will allow us to pull data from the Census Bureau, the "tidyverse" package lets us manipulate the data, the "ggplot2" and "scales" package will help us produce graphics, and the "tigris" package will allow those graphics to be map-based.
+
+```{r}
+
+library('soc339')
 library('lehmansociology')
-library('acs')
-library('printr')
+library('tidycensus')
+library('tidyverse')
+library('ggplot2')
+library('scales')
+library('tigris')
+options(tigris_use_cache=T)
+
+census_api_key("ENTER YOUR CENSUS API KEY HERE")
 
 ```
 
-For this lab, we'll use American Community Survey data.  To help keep response rates for the Census near 100%, in the 1990's, the Census Bureau decided to make the Census shorter, and to get rid of the Long Form Census that was administered to a portion of the population.  They found that longer questionnaires yielded lower response rates.  So, the Census Bureau created a new survey called the American Community Survey.  The ACS is administered to 1% of the US population each year, and asks a much more detailed and lengthy series of questions than on the Census, allowing the Census Bureau to keep the Census itself very brief.  Here, we will look at the results of their questions asking about household movement within the 5 boroughs of New York City on the 2017 ACS.
-
-The code below creates geographies for our pull from the ACS, and then imports data from a specific table already created by the Census Bureau.  Enter in 2017 for the year to tell ACS which year's data we want.
+Let's access data for net domestic migration from 2018 to 2019 for each state. We will save these data in a data set called DomesticMig.
 
 ```{r}
 
-bronx <- geo.make(county = "Bronx County", state = "NY")
-manhattan <- geo.make(county = "New York County", state = "NY")
-queens <- geo.make(county= "Queens County", state = "NY")
-brooklyn <- geo.make(county = "Kings County", state = "NY")
-statenisland <- geo.make(county = "Richmond County", state = "NY")
-nyc_counties <- bronx + manhattan + queens + brooklyn + statenisland
-
-migration <- acs.fetch(geography = nyc_counties, table.number = "B07003", endyear = ENTER YEAR HERE, span = 1, col.names = "pretty")
+ENTER DATA SET NAME HERE <- get_estimates(geography="state",
+                             variable="DOMESTICMIG",
+                             year=2019,
+                             geometry=T) %>%
+  shift_geometry()
 
 ```
 
-The names for the columns in the table are extremely long, so this code shortens the lines.  Then, we flip the row and columns of the table to make them easier to read.
+Now we'll map the data. Here we are using a map version of ggplot. You can see the commands are very similar to producing graphs, as we have done in previous labs. Instead of "geom_line()" or "geom_bar()", as we use in other laps, we use "geom_sf()" here to make a map within "ggplot()".
 
 ```{r}
 
-migration.names <- acs.colnames(migration)
-new.names <- stringr::str_sub(migration.names, start = 82)
-acs.colnames(migration) <- new.names
+StateMap <- ggplot() +
+  geom_sf(data=DomesticMig, aes(fill=value), color="grey60") +
+  coord_sf(crs=5070, datum=NA) +
+  scale_fill_gradient2(low="#8e1600", mid="#FFFFFF", high="#003d80", midpoint=0, labels=comma) +
+  labs(title="Domestic Migration by State,\nUnited States, July 1, 2018 - June 30, 2019", fill="Domestic Migration") +
+  theme_void() +
+  theme(plot.title=element_text(hjust=0.5))
 
-estimates <- as.data.frame(estimate(migration))
-
-estimatest <- t(estimates)
-
-estimatest
+StateMap
 
 ```
 
-Next, since we'll want to work with the data, we make some changes to how the names or each variable is formatted.
+Another geography available to us is the county level. To get a better sense of what's happening within New York State, let's pull data on New York counties. In the "geography" option, enter "county". Each state has an assigned number, called a FIPS code. New York's is 36. Enter this FIPS code for the "state" option.
 
 ```{r}
 
-new.names <- str_replace_all(str_trim(new.names), " ", ".")
-new.names <- str_replace_all(str_trim(new.names), ":", "")
-colnames(estimates) <- new.names
+DomesticMigCountyNY <- get_estimates(geography="ENTER GEOGRAPHY HERE",
+                             variable="DOMESTICMIG",
+                             year=2019,
+                             state=ENTER STATE FIPS CODE HERE,
+                             geometry=T)
 
 ```
 
-The ACS provides us with counts, or the estimated number of people that fall within each category.  We want to take a look at percents so we can view the relative proportions within each category.  The code below will calculate the percentages within each category.
+And let's map the county data. Enter the data set name for the data on New York counties that we've just pulled into R to complete this "ggplot()" command.
 
 ```{r}
 
-# First we create a function to calculate total percent and male-female breakdown.
+CountyMap <- ggplot() +
+  geom_sf(data=ENTER NY STATE COUNTIES DATA SET NAME HERE, aes(fill=value), color="grey60") +
+  coord_sf(datum=NA) +
+  scale_fill_gradient2(low="#8e1600", mid="#FFFFFF", high="#003d80", midpoint=0, labels=comma) +
+  labs(title="Domestic Migration by County,\nNew York State, July 1, 2018 - June 30, 2019", fill="Domestic Migration") +
+  theme_void() +
+  theme(plot.title=element_text(hjust=0.5))
 
-total_and_gender_percents <- function(x
-                                      ){
-  percent_total <- round(100 * x[[2]]/x[[1]] )
-  percent_male <- round(100 * x[[3]] / x[[2]] )
-  percent_female <- round(100 * x[[4]] / x[[2]])
-  # return a data frame with the three calculated percents
-  subtable <- data.frame(percent_total, percent_male, percent_female)
-  row.names(subtable) <- rownames
-  colnames_list <- names(x)[2:4]
-  colnames(subtable) <- colnames_list
-  subtable
-  
-}
-
-rownames <- row.names(estimates)
-
-gender <- list("Total" = estimates$Total, 
-              "Total_Male_plus_Female" = estimates$Total, 
-              "Male" = estimates$Male, 
-              "Female" = estimates$Female,
-              "rownames" = rownames)
-              
-# Now we use the function
-
-gender_distribution <- total_and_gender_percents(gender)
-
-same_house <- list("Total" = estimates$Total, 
-                    "Same.house.1.year.ago" = estimates$Same.house.1.year.ago,
-                    "Same.house.1.year.ago.Male" = estimates$Same.house.1.year.ago.Male,
-                    "Same.house.1.year.ago.Female" = estimates$Same.house.1.year.ago.Female,
-                    "row_names" = rownames)
-percent_same_house <- total_and_gender_percents(same_house) 
-
-same_county <- list ("Total" = estimates$Total, 
-                    "Moved.within.same.county" = estimates$Moved.within.same.county,
-                    "Moved.within.same.county.Male" = estimates$Moved.within.same.county.Male,
-                    "Moved.within.same.county.Female" = estimates$Moved.within.same.county.Female,
-                    "row_names" =  rownames)
-percent_moved_same_county <- total_and_gender_percents(same_county) 
-
-different_county_within_same_state <- list( 
-                                 "Total" =  estimates$Total, 
-                         "Moved.from.different.county.within.same.state" = 
-                                  estimates$Moved.from.different.county.within.same.state,
-                          "Moved.from.different.county.within.same.state.Male" =
-                                    estimates$Moved.from.different.county.within.same.state.Male,
-                         "Moved.from.different.county.within.same.state.Female" =
-                                  estimates$Moved.from.different.county.within.same.state.Female,
-                                   "row_names" =  rownames)
-percent_different_county_within_same_state <-
-                                 total_and_gender_percents(different_county_within_same_state) 
-
-from_different_state <- list( "Total" = estimates$Total, 
-            "Moved.from.different.state" = estimates$Moved.from.different.state,
-            "Moved.from.different.state.Male" =  estimates$Moved.from.different.state.Male,
-            "Moved.from.different.state.Female" = estimates$Moved.from.different.state.Female,
-            "row_names" =  rownames)
-percent_moved_from_different_state <- total_and_gender_percents(from_different_state) 
-
-moved_from_abroad <- list("Total" =  estimates$Total, 
-                          "Moved.from.abroad" =  estimates$Moved.from.abroad,
-                          "Moved.from.abroad.Male" = estimates$Moved.from.abroad.Male,
-                           "Moved.from.abroad.Female" = estimates$Moved.from.abroad.Female,
-                          "row_names" = rownames)
-
-percent_moved_from_abroad <-  total_and_gender_percents(moved_from_abroad)
+CountyMap
 
 ```
 
-Now, we want to create a separate table with just the percentages.  The code below separates out the variables with percentages from the original count variables.  After separating out the variables we want in our new table, we'll need to flip (or transpose) the rows and columns again using the t() command.  Go ahead an name the datasets.  You'll need one name for the dataset that selects just the variables in percent format, and you'll need a second dataset name for the transposed version.
+Note that domestic migration at the county level looks a little different than domestic migration at the state level. But also note that what it means is different. When we look at states, it's the balance of people moving to and from other states. When we look at counties, it's the balance of people moving to and from other counties, even if those counties are within the same state. So, for example, someone moving from Nassau county on Long Island to Queens is captured in the county map above, but is not captured in the state map.
+
+Now let's look at whether the patterns for county-level domestic migration in New York State have changed. We'll pull data for each year from 2010-2011 through 2018-2019. It would be difficult to view all the years side by side, so we'll map just 2010-2011, 2014-2015, and 2018-2019 to get a sense of whether patterns differ from earlier in the decade to later in the decade. To view all three, we'll use a command called "facet_wrap()" in our "ggplot()", which produces multiple versions of a graphic side by side. This will tell "ggplot()" to produce different graphics for different years. Enter a name for the plot. Note that the name needs be to entered twice. The first time is with the "ggplot()" command to the left of the "<-", establishing the name the plot is saved under. The second is the name written by itself to indicate you would like to view the plot, just like when you enter the name of a data set to view that data set.
 
 ```{r}
 
-YOUR DATA SET NAME FOR PERCENTS TABLE <- cbind(gender_distribution, percent_same_house, 
-                      percent_moved_same_county,
-                      percent_different_county_within_same_state,
-                      percent_moved_from_different_state,
-                      percent_moved_from_abroad)
+DomesticMigCountyNYYears <- get_estimates(geography="county",
+                             variable="DOMESTICMIG",
+                             year=2019,
+                             state=36,
+                             time_series=T,
+                             geometry=T)
 
-YOUR TRANSPOSED DATASET NAME <- t(YOUR DATA SET NAME FOR PERCENTS TABLE)
+DomesticMigCountyNYYears <- DomesticMigCountyNYYears[which(DomesticMigCountyNYYears$PERIOD==2|DomesticMigCountyNYYears$PERIOD==6|DomesticMigCountyNYYears$PERIOD==10),]
 
-YOUR TRANSPOSED DATASET NAME
+DomesticMigCountyNYYears$Year <- 0
+DomesticMigCountyNYYears$Year[which(DomesticMigCountyNYYears$PERIOD==2)] <- "Jul 1, 2010 - Jun 30, 2011"
+DomesticMigCountyNYYears$Year[which(DomesticMigCountyNYYears$PERIOD==6)] <- "Jul 1, 2014 - Jun 30, 2015"
+DomesticMigCountyNYYears$Year[which(DomesticMigCountyNYYears$PERIOD==10)] <- "Jul 1, 2018 - Jun 30, 2019"
+
+ENTER NAME FOR PLOT HERE <- ggplot(data=DomesticMigCountyNYYears) +
+  geom_sf(aes(fill=value), color="grey60") +
+  coord_sf(datum=NA) +
+  facet_wrap(~Year, ncol=2) +
+  scale_fill_gradient2(low="#8e1600", mid="#FFFFFF", high="#003d80", midpoint=0, labels=comma) +
+  labs(title="Domestic Migration by County,\nNew York State", fill="Domestic Migration") +
+  theme_void() +
+  theme(plot.title=element_text(hjust=0.5))
+
+ENTER NAME FOR PLOT HERE
 
 ```
 
-Go ahead and knit this template to PDF.  The main results you'll see are two tables, the first with counts, and the second with percentages.  We will interpret these tables in the lab in Blackboard.  Note that the document will not be wide enough to display the full table.  The submitted PDF will show me that you completed the template, however to view the full tables, you may need to knit to HTML or just view the tables in RStudio.
+Now, go ahead and knit to PDF. Return to BlackBoard to submit your work on this lab and for comprehension and discussion questions.
+
